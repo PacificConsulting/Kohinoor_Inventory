@@ -1,4 +1,4 @@
-pageextension 50403 ItemTrackEntriesExt extends "Item Tracking Entries"
+pageextension 50403 ItemTrackEntriesExt extends "Item Tracking Lines"
 {
     layout
     {
@@ -13,7 +13,20 @@ pageextension 50403 ItemTrackEntriesExt extends "Item Tracking Entries"
 
     actions
     {
-        // Add changes to page actions here
+        modify("Select Entries")
+        {
+            trigger OnAfterAction()
+            var
+                ILE: Record 32;
+            begin
+                ILE.RESET;
+                ILE.SETRANGE("Lot No.", Rec."Lot No.");
+                IF ILE.FINDFIRST THEN BEGIN
+                    Rec."Sr. No. Posting Date" := ILE."Sr. No. Posting Date";
+                    Rec.Modify();
+                END;
+            end;
+        }
     }
 
     var
