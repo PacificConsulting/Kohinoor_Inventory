@@ -44,13 +44,39 @@ codeunit 50401 "Events Subscribers"
         ValueEntry."Sr. No. Posting Date" := ItemLedgEntry."Sr. No. Posting Date";
     end;
 
+
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Jnl.-Post Line", 'OnAfterInitItemLedgEntry', '', false, false)]
     local procedure OnAfterInitItemLedgEntry(var NewItemLedgEntry: Record "Item Ledger Entry"; var ItemJournalLine: Record "Item Journal Line"; var ItemLedgEntryNo: Integer);
     var
         RecItem: Record 27;
     begin
         NewItemLedgEntry."Sr. No. Posting Date" := ItemJournalLine."Sr. No. Posting Date";
+
     End;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Jnl.-Post Line", 'OnAfterInsertItemLedgEntry', '', false, false)]
+    local procedure OnAfterInsertItemLedgEntry(var ItemLedgerEntry: Record "Item Ledger Entry"; ItemJournalLine: Record "Item Journal Line"; var ItemLedgEntryNo: Integer; var ValueEntryNo: Integer; var ItemApplnEntryNo: Integer; GlobalValueEntry: Record "Value Entry"; TransferItem: Boolean; var InventoryPostingToGL: Codeunit "Inventory Posting To G/L"; var OldItemLedgerEntry: Record "Item Ledger Entry")
+    var
+        ItemtrckMgt: Codeunit "Item Tracking Management";
+        TrackSpec: Record "Tracking Specification" temporary;
+        SerialNoInfo: Record "Serial No. Information";
+    begin
+        if ItemJournalLine."Serial No." <> '' then begin
+            if not SerialNoInfo.Get(ItemJournalLine."Item No.", ItemJournalLine."Variant Code", ItemJournalLine."Serial No.") then begin
+                SerialNoInfo.Init();
+                SerialNoInfo.Validate("Item No.", ItemJournalLine."Item No.");
+                SerialNoInfo.Validate("Variant Code", ItemJournalLine."Variant Code");
+                SerialNoInfo.Validate("Serial No.", ItemJournalLine."Serial No.");
+                SerialNoInfo.Insert(true);
+            end;
+            Message('Item No. %1 and Serial No. %1 combination serial No. card already Created');
+            // IF Not Confirm('Item No. %1 and Serial No. %1 combination serial No. card already Created, Do you wnat to create Agin same as duplicate', true) then
+            //     exit;
+
+        end;
+        //ItemtrckMgt.CreateSerialNoInformation();
+    end;
+    //<<<<<<<END********************************CU-22*****************************************
 
     var
         myInt: Integer;
