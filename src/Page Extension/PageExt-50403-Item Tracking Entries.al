@@ -8,6 +8,7 @@ pageextension 50403 ItemTrackEntriesExt extends "Item Tracking Lines"
             {
                 ApplicationArea = All;
             }
+
         }
     }
 
@@ -27,6 +28,7 @@ pageextension 50403 ItemTrackEntriesExt extends "Item Tracking Lines"
                 END;
             end;
         }
+
     }
 
     var

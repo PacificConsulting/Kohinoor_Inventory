@@ -16,6 +16,7 @@ codeunit 50401 "Events Subscribers"
     local procedure OnAfterCopyTrackingSpec(var SourceTrackingSpec: Record "Tracking Specification"; var DestTrkgSpec: Record "Tracking Specification");
     begin
         DestTrkgSpec."Sr. No. Posting Date" := SourceTrackingSpec."Sr. No. Posting Date";
+
     end;
 
     [EventSubscriber(ObjectType::Page, Page::"Item Tracking Lines", 'OnAfterEntriesAreIdentical', '', false, false)]
@@ -54,28 +55,59 @@ codeunit 50401 "Events Subscribers"
 
     End;
 
+    /*
+     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Jnl.-Post Line", 'OnAfterInsertItemLedgEntry', '', false, false)]
+     local procedure OnAfterInsertItemLedgEntry(var ItemLedgerEntry: Record "Item Ledger Entry"; ItemJournalLine: Record "Item Journal Line"; var ItemLedgEntryNo: Integer; var ValueEntryNo: Integer; var ItemApplnEntryNo: Integer; GlobalValueEntry: Record "Value Entry"; TransferItem: Boolean; var InventoryPostingToGL: Codeunit "Inventory Posting To G/L"; var OldItemLedgerEntry: Record "Item Ledger Entry")
+     var
+         ItemtrckMgt: Codeunit "Item Tracking Management";
+         TrackSpec: Record "Tracking Specification" temporary;
+         SerialNoInfo: Record "Serial No. Information";
+     begin
+         if ItemJournalLine."Serial No." <> '' then begin
+             if not SerialNoInfo.Get(ItemJournalLine."Item No.", ItemJournalLine."Variant Code", ItemJournalLine."Serial No.") then begin
+                 SerialNoInfo.Init();
+                 SerialNoInfo.Validate("Item No.", ItemJournalLine."Item No.");
+                 SerialNoInfo.Validate("Variant Code", ItemJournalLine."Variant Code");
+                 SerialNoInfo.Validate("Serial No.", ItemJournalLine."Serial No.");
+                 SerialNoInfo.Insert(true);
+             end;
+             Message('Item No. %1 and Serial No. %1 combination serial No. card already Created');
+             // IF Not Confirm('Item No. %1 and Serial No. %1 combination serial No. card already Created, Do you wnat to create Agin same as duplicate', true) then
+             //     exit;
+
+         end;
+         //ItemtrckMgt.CreateSerialNoInformation();
+     end;
+     */
+    //PCPL-0070 << Start
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Jnl.-Post Line", 'OnAfterInsertItemLedgEntry', '', false, false)]
     local procedure OnAfterInsertItemLedgEntry(var ItemLedgerEntry: Record "Item Ledger Entry"; ItemJournalLine: Record "Item Journal Line"; var ItemLedgEntryNo: Integer; var ValueEntryNo: Integer; var ItemApplnEntryNo: Integer; GlobalValueEntry: Record "Value Entry"; TransferItem: Boolean; var InventoryPostingToGL: Codeunit "Inventory Posting To G/L"; var OldItemLedgerEntry: Record "Item Ledger Entry")
     var
         ItemtrckMgt: Codeunit "Item Tracking Management";
-        TrackSpec: Record "Tracking Specification" temporary;
+        TrackSpec: Record "Tracking Specification";// temporary;
         SerialNoInfo: Record "Serial No. Information";
-    begin
-        if ItemJournalLine."Serial No." <> '' then begin
-            if not SerialNoInfo.Get(ItemJournalLine."Item No.", ItemJournalLine."Variant Code", ItemJournalLine."Serial No.") then begin
-                SerialNoInfo.Init();
-                SerialNoInfo.Validate("Item No.", ItemJournalLine."Item No.");
-                SerialNoInfo.Validate("Variant Code", ItemJournalLine."Variant Code");
-                SerialNoInfo.Validate("Serial No.", ItemJournalLine."Serial No.");
-                SerialNoInfo.Insert(true);
-            end;
-            Message('Item No. %1 and Serial No. %1 combination serial No. card already Created');
-            // IF Not Confirm('Item No. %1 and Serial No. %1 combination serial No. card already Created, Do you wnat to create Agin same as duplicate', true) then
-            //     exit;
-
-        end;
-        //ItemtrckMgt.CreateSerialNoInformation();
-    end;
+    Begin
+        TrackSpec.Reset;
+        TrackSpec.Setrange("Item No.", ItemJournalLine."Item No.");
+        TrackSpec.SetRange("Location Code", ItemJournalLine."Location Code");
+        TrackSpec.SetRange("Source Type", 83);
+        TrackSpec.SetRange("Source Subtype", 2);
+        TrackSpec.SetRange("Source ID", 'ITEM');
+        TrackSpec.SetRange("Source Ref. No.", ItemJournalLine."Line No.");
+        TrackSpec.SetRange("Variant Code", ItemJournalLine."Variant Code");
+        if TrackSpec.FindSet() then
+            repeat
+                if not SerialNoInfo.Get(ItemJournalLine."Item No.", ItemJournalLine."Variant Code", ItemJournalLine."Serial No.") then begin
+                    SerialNoInfo.Init();
+                    SerialNoInfo.Validate("Item No.", ItemJournalLine."Item No.");
+                    SerialNoInfo.Validate("Variant Code", ItemJournalLine."Variant Code");
+                    SerialNoInfo.Validate("Serial No.", TrackSpec."Serial No.");
+                    SerialNoInfo.Insert(true);
+                end;
+                Message('Item No. %1 and Serial No. %1 combination serial No. card already Created', ItemJournalLine."Item No.", TrackSpec."Serial No.");
+            until TrackSpec.Next() = 0;
+    End;
+    //PCPL-0070 >>END
     //<<<<<<<END********************************CU-22*****************************************
 
     var

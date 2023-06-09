@@ -6,6 +6,7 @@ tableextension 50405 TrackingSpecificationExt extends "Tracking Specification"
         {
             DataClassification = ToBeClassified;
         }
+
     }
 
     var
